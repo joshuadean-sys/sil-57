@@ -95,21 +95,19 @@ export default function VacantShifts() {
   }
 
   const renderShift = (shift: VacantShift) => (
-    <div key={shift.id} className="rounded-lg border p-3 space-y-2">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Badge variant="secondary">{shift.role}</Badge>
-          <span className="text-muted-foreground">{shift.start} – {shift.end}</span>
-        </div>
+    <div key={shift.id} className="rounded-lg border p-3 h-40 w-full max-w-80 bg-white shadow-sm hover:shadow-md transition-shadow flex flex-col">
+      <div className="flex items-center justify-between gap-2 mb-2">
+        <Badge variant="secondary" className="shrink-0">{shift.role}</Badge>
         {shift.allocatedTo ? (
-          <Badge className="bg-success text-success-foreground">{shift.allocatedTo}</Badge>
+          <Badge className="bg-success text-success-foreground shrink-0 text-[10px] px-0.5 py-0">{shift.allocatedTo}</Badge>
         ) : (
-          <Button size="sm" onClick={() => openAllocate(shift)}>Allocate</Button>
+          <Button size="sm" onClick={() => openAllocate(shift)} className="shrink-0 h-6 px-2 text-xs">Allocate</Button>
         )}
       </div>
-      {shift.location && <div className="text-muted-foreground">{shift.location}</div>}
+      <div className="text-muted-foreground text-sm mb-2">{shift.start} – {shift.end}</div>
+      {shift.location && <div className="text-muted-foreground text-sm mb-2">{shift.location}</div>}
       {shift.participants && (
-        <div className="text-muted-foreground text-xs">Participants: {shift.participants.join(", ")}</div>
+        <div className="text-muted-foreground text-xs mt-auto">Participants: {shift.participants.join(", ")}</div>
       )}
     </div>
   )
@@ -135,17 +133,17 @@ export default function VacantShifts() {
           <CardTitle>Vacant Shifts</CardTitle>
         </CardHeader>
         <CardContent>
-          {view === "week" ? (
-            <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
-              {days.map((d) => (
-                <div key={+d} className="space-y-3">
-                  <div className="text-sm font-medium">{format(d, "EEE d MMM")}</div>
-                  <div className="space-y-2">
-                    {shifts.filter((s) => isSameDay(s.date, d)).map(renderShift)}
-                  </div>
-                </div>
-              ))}
-            </div>
+                     {view === "week" ? (
+             <div className="grid grid-cols-1 lg:grid-cols-7 md:grid-cols-3 sm:grid-cols-2 gap-6">
+               {days.map((d) => (
+                 <div key={+d} className="space-y-3 min-w-0">
+                   <div className="text-sm font-medium sticky top-0 bg-background py-2">{format(d, "EEE d MMM")}</div>
+                   <div className="space-y-3">
+                     {shifts.filter((s) => isSameDay(s.date, d)).map(renderShift)}
+                   </div>
+                 </div>
+               ))}
+             </div>
           ) : (
             <div className="space-y-4">
               <div className="flex items-center gap-2">
@@ -161,9 +159,9 @@ export default function VacantShifts() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                {shifts.filter((s) => isSameDay(s.date, selectedDay)).map(renderShift)}
-              </div>
+                             <div className="space-y-3">
+                 {shifts.filter((s) => isSameDay(s.date, selectedDay)).map(renderShift)}
+               </div>
             </div>
           )}
         </CardContent>

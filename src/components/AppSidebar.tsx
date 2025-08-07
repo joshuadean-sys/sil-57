@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import { 
   Home, 
   Inbox, 
@@ -185,34 +185,99 @@ function SidebarGroupComponent({ title, items, isCollapsed, showLabel = true, co
   const [isExpanded, setIsExpanded] = useState(true)
   const [openMap, setOpenMap] = useState<Record<string, boolean>>({})
   const location = useLocation()
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setOpenMap({})
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [])
+
+  // Auto-expand dropdowns when sidebar is collapsed and user hovers
+  const handleMouseEnter = (itemTitle: string) => {
+    if (isCollapsed && items.find(item => item.title === itemTitle)?.children) {
+      setOpenMap(prev => ({ ...prev, [itemTitle]: true }))
+    }
+  }
+
+  const handleMouseLeave = (itemTitle: string) => {
+    if (isCollapsed && items.find(item => item.title === itemTitle)?.children) {
+      // Add a small delay to prevent accidental closing
+      setTimeout(() => {
+        setOpenMap(prev => ({ ...prev, [itemTitle]: false }))
+      }, 150)
+    }
+  }
+
+  // Handle touch events for mobile
+  const handleTouchStart = (itemTitle: string) => {
+    if (isCollapsed && items.find(item => item.title === itemTitle)?.children) {
+      setOpenMap(prev => ({ ...prev, [itemTitle]: !prev[itemTitle] }))
+    }
+  }
 
   if (isCollapsed) {
     return (
-      <SidebarGroup>
+      <SidebarGroup ref={dropdownRef}>
         <SidebarGroupContent>
           <SidebarMenu>
             {items.map((item) => (
-              <SidebarMenuItem key={item.title}>
+              <SidebarMenuItem 
+                key={item.title}
+                onMouseEnter={() => handleMouseEnter(item.title)}
+                onMouseLeave={() => handleMouseLeave(item.title)}
+                onTouchStart={() => handleTouchStart(item.title)}
+                className="relative"
+              >
                 <SidebarMenuButton asChild tooltip={item.title}>
                   {item.isPopover ? (
                     <InboxPopover>
-                      <div className="flex items-center w-full cursor-pointer hover:bg-accent/50">
+                      <div className="flex items-center w-full">
                         <item.icon className="h-4 w-4" />
                       </div>
                     </InboxPopover>
                   ) : (
                     <NavLink 
                       to={item.url} 
-                      className={({ isActive }) => 
-                        isActive 
-                          ? "bg-accent text-accent-foreground font-medium" 
-                          : "hover:bg-accent/50"
-                      }
+                      className="flex items-center w-full"
                     >
                       <item.icon className="h-4 w-4" />
                     </NavLink>
                   )}
                 </SidebarMenuButton>
+                
+                {/* Dropdown for collapsed state */}
+                {item.children && item.children.length > 0 && openMap[item.title] && (
+                  <div 
+                    className="sidebar-dropdown"
+                    onMouseEnter={() => setOpenMap(prev => ({ ...prev, [item.title]: true }))}
+                    onMouseLeave={() => handleMouseLeave(item.title)}
+                  >
+                    <div className="p-1">
+                      {item.children.map((child) => (
+                        <NavLink
+                          key={child.title}
+                          to={child.url}
+                          className={({ isActive }) =>
+                            `sidebar-dropdown-item ${
+                              isActive ? "active" : ""
+                            }`
+                          }
+                        >
+                          {child.title}
+                        </NavLink>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </SidebarMenuItem>
             ))}
           </SidebarMenu>
@@ -221,8 +286,8 @@ function SidebarGroupComponent({ title, items, isCollapsed, showLabel = true, co
     )
   }
 
-return (
-    <SidebarGroup>
+  return (
+    <SidebarGroup ref={dropdownRef}>
       {showLabel && (
         <SidebarGroupLabel 
           className="flex items-center justify-between cursor-pointer text-xs text-muted-foreground font-medium uppercase tracking-wider"
@@ -238,13 +303,56 @@ return (
       )}
       {(!showLabel || isExpanded) && (
         <SidebarGroupContent>
-        <SidebarMenu>
-          {items.map((item) => (
-            <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton asChild>
-                {item.isPopover ? (
-                  <InboxPopover>
-                    <button type="button" className="flex items-center justify-between w-full hover:bg-accent/50">
+          <SidebarMenu>
+            {items.map((item) => (
+              <SidebarMenuItem key={item.title}>
+                <SidebarMenuButton asChild>
+                  {item.isPopover ? (
+                    <InboxPopover>
+                      <div className="flex items-center justify-between w-full">
+                        <div className="flex items-center">
+                          <item.icon className="mr-2 h-4 w-4" />
+                          <span>{item.title}</span>
+                        </div>
+                        {item.badge && (
+                          <span className={`text-xs px-1.5 py-0.5 rounded ${
+                            item.badge === "!" 
+                              ? "bg-destructive text-destructive-foreground" 
+                              : "bg-muted text-muted-foreground"
+                          }`}>
+                            {item.badge}
+                          </span>
+                        )}
+                      </div>
+                    </InboxPopover>
+                  ) : item.children && item.children.length > 0 ? (
+                    <button
+                      type="button"
+                      onClick={() => setOpenMap((prev) => ({ ...prev, [item.title]: !prev[item.title] }))}
+                      className="flex items-center justify-between w-full"
+                    >
+                      <div className="flex items-center">
+                        <item.icon className="mr-2 h-4 w-4" />
+                        <span>{item.title}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {item.badge && (
+                          <span className={`text-xs px-1.5 py-0.5 rounded ${
+                            item.badge === "!" 
+                              ? "bg-destructive text-destructive-foreground" 
+                              : "bg-muted text-muted-foreground"
+                          }`}>
+                            {item.badge}
+                          </span>
+                        )}
+                        <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${openMap[item.title] ? "rotate-180" : ""}`} />
+                      </div>
+                    </button>
+                  ) : (
+                    <NavLink 
+                      to={item.url} 
+                      className="flex items-center justify-between w-full"
+                    >
                       <div className="flex items-center">
                         <item.icon className="mr-2 h-4 w-4" />
                         <span>{item.title}</span>
@@ -258,83 +366,37 @@ return (
                           {item.badge}
                         </span>
                       )}
-                    </button>
-                  </InboxPopover>
-                ) : item.children && item.children.length > 0 ? (
-                  <div className="w-full">
-                    <button
-                      type="button"
-                      onClick={() => setOpenMap((prev) => ({ ...prev, [item.title]: !prev[item.title] }))}
-                      className="flex items-center justify-between w-full hover:bg-accent/50"
-                    >
-                      <div className="flex items-center">
-                        <item.icon className="mr-2 h-4 w-4" />
-                        <span>{item.title}</span>
-                      </div>
-                      <ChevronDown className={`h-3 w-3 transition-transform ${openMap[item.title] ? "rotate-180" : ""}`} />
-                    </button>
-                    {openMap[item.title] && (
-                      <SidebarMenuSub className="mt-1">
-                        {item.children.map((child) => (
-                          <SidebarMenuSubItem key={child.title}>
-                            <SidebarMenuSubButton asChild>
-                              <NavLink 
-                                to={child.url}
-                                className={({ isActive }) => 
-                                  `flex items-center justify-between w-full ${
-                                    isActive 
-                                      ? "bg-accent text-accent-foreground font-medium" 
-                                      : "hover:bg-accent/50"
-                                  }`
-                                }
-                              >
-                                <span>{child.title}</span>
-                                {child.badge && (
-                                  <span className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
-                                    {child.badge}
-                                  </span>
-                                )}
-                              </NavLink>
-                            </SidebarMenuSubButton>
-                          </SidebarMenuSubItem>
-                        ))}
-                      </SidebarMenuSub>
-                    )}
-                  </div>
-                ) : (
-                  <NavLink 
-                    to={item.url} 
-                    className={({ isActive }) => 
-                      `flex items-center justify-between w-full ${
-                        isActive 
-                          ? "bg-accent text-accent-foreground font-medium" 
-                          : "hover:bg-accent/50"
-                      }`
-                    }
-                  >
-                    <div className="flex items-center">
-                      <item.icon className="mr-2 h-4 w-4" />
-                      <span>{item.title}</span>
-                    </div>
-                    {item.badge && (
-                      <span className={`text-xs px-1.5 py-0.5 rounded ${
-                        item.badge === "!" 
-                          ? "bg-destructive text-destructive-foreground" 
-                          : "bg-muted text-muted-foreground"
-                      }`}>
-                        {item.badge}
-                      </span>
-                    )}
-                  </NavLink>
+                    </NavLink>
+                  )}
+                </SidebarMenuButton>
+                {item.children && item.children.length > 0 && openMap[item.title] && (
+                  <SidebarMenuSub className="mt-1">
+                    {item.children.map((child) => (
+                      <SidebarMenuSubItem key={child.title}>
+                        <SidebarMenuSubButton asChild>
+                          <NavLink 
+                            to={child.url}
+                            className="flex items-center justify-between w-full"
+                          >
+                            <span>{child.title}</span>
+                            {child.badge && (
+                              <span className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+                                {child.badge}
+                              </span>
+                            )}
+                          </NavLink>
+                        </SidebarMenuSubButton>
+                      </SidebarMenuSubItem>
+                    ))}
+                  </SidebarMenuSub>
                 )}
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
-        </SidebarMenu>
-      </SidebarGroupContent>
-    )}
-  </SidebarGroup>
-)
+              </SidebarMenuItem>
+            ))}
+          </SidebarMenu>
+        </SidebarGroupContent>
+      )}
+    </SidebarGroup>
+  )
 }
 
 export function AppSidebar() {
@@ -357,7 +419,7 @@ export function AppSidebar() {
 
       <SidebarContent className="px-2 py-2">
         {/* Main Navigation */}
-      <SidebarGroupComponent 
+        <SidebarGroupComponent 
           title="Main" 
           items={navigation} 
           isCollapsed={isCollapsed} 

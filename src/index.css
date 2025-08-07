@@ -121,3 +121,22 @@
     @apply text-base font-semibold;
   }
 }
+
+@layer components {
+  /* Sidebar dropdown styles */
+  .sidebar-dropdown {
+    @apply absolute left-full top-0 ml-1 z-50 min-w-48 bg-popover border rounded-md shadow-lg;
+  }
+  
+  .sidebar-dropdown-item {
+    @apply block px-3 py-2 text-sm rounded-md transition-colors;
+  }
+  
+  .sidebar-dropdown-item:hover {
+    @apply bg-accent/50;
+  }
+  
+  .sidebar-dropdown-item.active {
+    @apply bg-accent text-accent-foreground;
+  }
+}
