@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AppSidebar } from "@/components/AppSidebar";
 import Index from "./pages/Index";
 import Clients from "./pages/Clients";
+import HCPClients from "./pages/HCPClients";
 import SILHouse from "./pages/SILHouse";
 import ClientDetail from "./pages/ClientDetail";
 import SchedulerRoster from "./pages/SchedulerRoster";
@@ -38,6 +39,7 @@ const App = () => (
                 <Routes>
                   <Route path="/" element={<Index />} />
                   <Route path="/clients" element={<Clients />} />
+                  <Route path="/clients/hcp" element={<HCPClients />} />
                   <Route path="/sil" element={<SILHouse />} />
                   <Route path="/client/:id" element={<ClientDetail />} />
                   <Route path="/scheduler" element={<Navigate to="/scheduler/roster" replace />} />

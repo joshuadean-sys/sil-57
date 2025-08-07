@@ -1,6 +1,7 @@
-import { Edit } from "lucide-react"
+import { Edit, Users } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { useNavigate } from "react-router-dom"
 
 interface Client {
   id: number
@@ -18,6 +19,8 @@ interface ConnectionsTabProps {
 }
 
 export function ConnectionsTab({ client }: ConnectionsTabProps) {
+  const navigate = useNavigate()
+  
   const secondaryContact = {
     fullName: "Paula Birkett",
     relationship: "Daughter",
@@ -59,6 +62,38 @@ export function ConnectionsTab({ client }: ConnectionsTabProps) {
 
   return (
     <div className="space-y-6">
+      {/* HCP Navigation */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            HCP Management
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground mb-2">
+                This client is on a Home Care Package (Level {client.level}). 
+                View all HCP clients or manage this client's care plan.
+              </p>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span>Funding: {client.funding}</span>
+                <span>•</span>
+                <span>Level: {client.level}</span>
+              </div>
+            </div>
+            <Button 
+              onClick={() => navigate('/clients/hcp')}
+              className="flex items-center gap-2"
+            >
+              <Users className="h-4 w-4" />
+              View All HCP Clients
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Contact Information Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Secondary Contact */}
